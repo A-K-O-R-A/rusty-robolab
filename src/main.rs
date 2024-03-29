@@ -2,7 +2,6 @@ use ev3dev_lang_rust::motors::{LargeMotor, MotorPort};
 use ev3dev_lang_rust::sensors::ColorSensor;
 use ev3dev_lang_rust::Ev3Result;
 
-use std::error;
 use std::time::Instant;
 
 const WHITE: (u32, u32, u32) = (200, 200, 200);
@@ -12,12 +11,15 @@ const KP: f32 = 0.9;
 const KI: f32 = 0.0;
 const KD: f32 = 0.0;
 
-const SPEED: f32 = 20.0;
+const SPEED: f32 = 30.0;
 
 fn main() -> Ev3Result<()> {
     // Get large motor on port outA.
     let right_motor = LargeMotor::get(MotorPort::OutA)?;
     let left_motor = LargeMotor::get(MotorPort::OutD)?;
+
+    right_motor.set_stop_action(LargeMotor::STOP_ACTION_BRAKE)?;
+    left_motor.set_stop_action(LargeMotor::STOP_ACTION_BRAKE)?;
 
     // Find color sensor. Always returns the first recognized one.
     let color_sensor = ColorSensor::find()?;
@@ -43,10 +45,6 @@ fn run(
     right_motor.run_direct()?;
     left_motor.run_direct()?;
 
-    // Run motor.
-    right_motor.set_duty_cycle_sp(0)?;
-    left_motor.set_duty_cycle_sp(0)?;
-
     color_sensor.set_mode_rgb_raw()?;
 
     let now = Instant::now();
@@ -55,31 +53,35 @@ fn run(
     let mut i = 0.0;
     let count = 500;
 
+    // let right_attr = right_motor.get_attribute("duty_cycle_sp");
+    // let left_attr = right_motor.get_attribute("duty_cycle_sp");
+
     for _ in 0..count {
-        // Switch to rgb mode.
-        // let brightness = calculate_brightness(color_sensor.get_rgb()?);
-        let brightness = calculate_brightness((1, 2, 3));
-        // let error = brightness - 0.5;
-        let error = last_error + 0.01;
-        //let error = -0.2;
+        let brightness = calculate_brightness(color_sensor.get_rgb()?);
+        // Error should range from -1.0 to 1.0
+        let error = 2.0 * (brightness - 0.5);
 
         let p = error;
-        // i += error;
-        // let d = error / last_error;
-        let d = 0.0;
+        i += error;
+        let d: f32 = error - last_error;
 
         // println!("brightness {brightness}, error: {error}");
-        // println!("PID {p} : {i} : {d}");
+        println!("PID {p} : {i} : {d}");
 
         let pid = (p * KP) + (i * KI) + (d * KD);
 
         let right_speed = (SPEED - (pid * SPEED)).round() as i32;
+        let right_speed = right_speed.clamp(-100, 100);
         let left_speed = (SPEED + (pid * SPEED)).round() as i32;
+        let left_speed = left_speed.clamp(-100, 100);
 
         // println!("{pid} : {left_speed} : {right_speed}");
 
         right_motor.set_duty_cycle_sp(right_speed)?;
         left_motor.set_duty_cycle_sp(left_speed)?;
+
+        // right_attr.set(right_speed)?;
+        // left_attr.set(left_speed)?;
 
         last_error = error;
     }
