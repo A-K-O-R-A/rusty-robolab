@@ -1,17 +1,16 @@
 use ev3dev_lang_rust::motors::{LargeMotor, MotorPort};
 use ev3dev_lang_rust::sensors::ColorSensor;
-use ev3dev_lang_rust::Ev3Result;
+use ev3dev_lang_rust::{Device, Ev3Result};
 
 use std::time::Instant;
 
-const WHITE: (u32, u32, u32) = (200, 200, 200);
-const BLACK: (u32, u32, u32) = (20, 20, 20);
+mod color;
 
 const KP: f32 = 0.9;
 const KI: f32 = 0.0;
 const KD: f32 = 0.0;
 
-const SPEED: f32 = 30.0;
+const SPEED: f32 = 10.0;
 
 fn main() -> Ev3Result<()> {
     // Get large motor on port outA.
@@ -47,8 +46,6 @@ fn run(
 
     color_sensor.set_mode_rgb_raw()?;
 
-    let now = Instant::now();
-
     let mut last_error = 0.0;
     let mut i = 0.0;
     let count = 500;
@@ -56,8 +53,25 @@ fn run(
     // let right_attr = right_motor.get_attribute("duty_cycle_sp");
     // let left_attr = right_motor.get_attribute("duty_cycle_sp");
 
+    /*
+    let color_attr_r = color_sensor.get_attribute("value0");
+    let color_attr_g = color_sensor.get_attribute("value1");
+    let color_attr_b = color_sensor.get_attribute("value2");
+    */
+
+    let now = Instant::now();
+
     for _ in 0..count {
-        let brightness = calculate_brightness(color_sensor.get_rgb()?);
+        let color = color_sensor.get_rgb()?;
+        /*
+        let color = (
+            color_attr_r.get()?,
+            color_attr_g.get()?,
+            color_attr_b.get()?,
+        );
+         */
+
+        let brightness = color::calculate_brightness(color);
         // Error should range from -1.0 to 1.0
         let error = 2.0 * (brightness - 0.5);
 
@@ -89,16 +103,4 @@ fn run(
     println!("Loop time {:?}", elapsed);
 
     Ok(())
-}
-
-fn calculate_brightness(color: (i32, i32, i32)) -> f32 {
-    let (r_w, g_w, b_w) = WHITE;
-    let (r_b, g_b, b_b) = BLACK;
-
-    let (r, g, b) = color;
-    let r = ((r as f32 - r_b as f32) / (r_w as f32 - r_b as f32)).clamp(0.0, 1.0);
-    let g = ((g as f32 - g_b as f32) / (g_w as f32 - g_b as f32)).clamp(0.0, 1.0);
-    let b = ((b as f32 - b_b as f32) / (b_w as f32 - b_b as f32)).clamp(0.0, 1.0);
-
-    (0.299 * (r as f32)) + (0.587 * (g as f32)) + (0.114 * (b as f32))
 }
