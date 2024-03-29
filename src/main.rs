@@ -1,6 +1,6 @@
 use ev3dev_lang_rust::motors::{LargeMotor, MotorPort};
 use ev3dev_lang_rust::sensors::ColorSensor;
-use ev3dev_lang_rust::{Device, Ev3Result};
+use ev3dev_lang_rust::Ev3Result;
 
 use std::time::Instant;
 
