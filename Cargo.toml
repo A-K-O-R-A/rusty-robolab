@@ -7,3 +7,8 @@ edition = "2021"
 
 [dependencies]
 ev3dev-lang-rust = "0.14.0"
+
+[profile.release]
+strip = true    # Automatically strip symbols from the binary.
+opt-level = "z" # Optimize for size.
+lto = true
