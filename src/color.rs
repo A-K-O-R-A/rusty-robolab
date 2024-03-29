@@ -1,15 +1,42 @@
+use std::{thread, time::Duration};
+
 use ev3dev_lang_rust::{sensors::ColorSensor, Ev3Result};
 
-const WHITE: (u32, u32, u32) = (200, 200, 200);
-const BLACK: (u32, u32, u32) = (20, 20, 20);
+const WHITE: (u32, u32, u32) = (328, 353, 225);
+const BLACK: (u32, u32, u32) = (36, 47, 47);
+
+const BLUE: (u32, u32, u32) = (161, 291, 196);
+const RED: (u32, u32, u32) = (305, 94, 57);
 
 type RawColor = (i32, i32, i32);
 type RgbColor = (f32, f32, f32);
 
-pub fn calculate_brightness(color: RawColor) -> f32 {
-    let (r, g, b) = adjust_color(color);
+pub fn check_blue(color: RawColor) -> bool {
+    let threshold = 30;
 
-    (0.299 * (r as f32)) + (0.587 * (g as f32)) + (0.114 * (b as f32))
+    let (r, g, b) = color;
+    let (ref_r, ref_g, ref_b) = BLUE;
+
+    r.abs_diff(ref_r as i32) < threshold
+        && g.abs_diff(ref_g as i32) < threshold
+        && b.abs_diff(ref_b as i32) < threshold
+}
+
+pub fn check_red(color: RawColor) -> bool {
+    let threshold = 20;
+
+    let (r, g, b) = color;
+    let (ref_r, ref_g, ref_b) = RED;
+
+    r.abs_diff(ref_r as i32) < threshold
+        && g.abs_diff(ref_g as i32) < threshold
+        && b.abs_diff(ref_b as i32) < threshold
+}
+
+pub fn calculate_brightness(color: RgbColor) -> f32 {
+    let (r, g, b) = color;
+
+    (0.299 * r) + (0.587 * g) + (0.114 * b)
 }
 
 pub fn adjust_color(color: RawColor) -> RgbColor {
@@ -24,6 +51,17 @@ pub fn adjust_color(color: RawColor) -> RgbColor {
     (r, g, b)
 }
 
-pub fn calibrate_colors(sensor: &ColorSensor) -> Ev3Result<()> {
+pub fn calibrate_colors(color_sensor: &ColorSensor) -> Ev3Result<()> {
+    color_sensor.set_mode_rgb_raw()?;
+
+    let color_list = ["white", "black", "blue", "red"];
+
+    for color in color_list {
+        println!("Calibrating {color}");
+        thread::sleep(Duration::from_secs(5));
+        let color = color_sensor.get_rgb()?;
+        println!("{color:?}");
+    }
+
     Ok(())
 }
