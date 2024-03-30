@@ -7,7 +7,7 @@ edition = "2021"
 
 [dependencies]
 ctrlc = "3.4.4"
-ev3dev-lang-rust = "0.14.0"
+ev3dev-lang-rust = { path = "../ev3dev-lang-rust" }
 
 [profile.release]
 strip = true    # Automatically strip symbols from the binary.

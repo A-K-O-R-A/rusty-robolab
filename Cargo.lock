@@ -33,8 +33,6 @@ dependencies = [
 [[package]]
 name = "ev3dev-lang-rust"
 version = "0.14.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dd0c0340f9deb0e38a4c14f029587f50f3fe65baf68fd3c4ebf25b713358b7a4"
 dependencies = [
  "ev3dev-lang-rust-derive",
  "libc",
@@ -44,8 +42,6 @@ dependencies = [
 [[package]]
 name = "ev3dev-lang-rust-derive"
 version = "0.10.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ddd7a95543e9418e8ad0b08b6a2a47a1c33d260c97b5a056fbf8b0fdb648e9a6"
 dependencies = [
  "proc-macro2",
  "quote",

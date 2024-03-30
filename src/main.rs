@@ -2,12 +2,10 @@ use ev3dev_lang_rust::motors::{LargeMotor, MotorPort};
 use ev3dev_lang_rust::sensors::ColorSensor;
 use ev3dev_lang_rust::{Device, Ev3Result};
 
-use std::fs::{self, OpenOptions};
-use std::io::{Read, Seek, SeekFrom};
-use std::os::unix::fs::PermissionsExt;
 use std::process;
 use std::time::Instant;
 
+#[allow(unused_imports)]
 use crate::color::calibrate_colors;
 
 mod color;
@@ -29,13 +27,13 @@ fn main() -> Ev3Result<()> {
     // Find color sensor. Always returns the first recognized one.
     let color_sensor = ColorSensor::find()?;
 
-    ctrlc::set_handler(|| {
-        let right_motor = LargeMotor::get(MotorPort::OutA).unwrap();
-        let left_motor = LargeMotor::get(MotorPort::OutD).unwrap();
 
+    let r_motor = right_motor.clone();
+    let l_motor = left_motor.clone();
+    ctrlc::set_handler( move || {
         // This is a fail safe that will all motors in case something goes wrong
-        right_motor.stop().unwrap();
-        left_motor.stop().unwrap();
+        r_motor.stop().unwrap();
+        l_motor.stop().unwrap();
 
         process::exit(-1)
     })
@@ -73,36 +71,13 @@ fn run(
     let right_attr = right_motor.get_attribute("duty_cycle_sp");
     let left_attr = left_motor.get_attribute("duty_cycle_sp");
 
-    // let color_attr_r = color_sensor.get_attribute("value0");
-    // let color_attr_g = color_sensor.get_attribute("value1");
-    // let color_attr_b = color_sensor.get_attribute("value2");
-
     // let color_format: String = color_sensor.get_attribute("num_values").get()?;
     // println!("{color_format}"); // s16
 
-    let color_attr = color_sensor.get_attribute("bin_data");
-    // "/sys/class/lego-sensor/sensor0/bin_data"
-    let path = color_attr.get_file_path().clone();
-    println!("{path:?}");
-    drop(color_attr);
-
-    let stat = fs::metadata(&path)?;
-
-    let mode = stat.permissions().mode();
-
-    // Read permission for group (`ev3dev`)
-    let readable = mode & 0o040 == 0o040;
-    let writeable = mode & 0o020 == 0o020;
-
-    let mut file = OpenOptions::new()
-        .read(readable)
-        .write(writeable)
-        .open(path)?;
 
     let now = Instant::now();
 
     // (s16) 2 * 4 = 8 bytes
-    let mut color_vec: Vec<u8> = Vec::with_capacity(8);
 
     // right_motor.stop()?;
     // left_motor.stop()?;
@@ -120,16 +95,9 @@ fn run(
         */
         count += 1;
 
-        file.seek(SeekFrom::Start(0))?;
-        color_vec.clear();
-        let _count_read = file.read_to_end(&mut color_vec)?;
 
-        let title: Vec<i16> = color_vec[0..8]
-            .chunks_exact(2)
-            .map(|a| i16::from_ne_bytes([a[0], a[1]]))
-            .collect();
-        // println!("{title:?}");
-        let color = (title[0] as i32, title[1] as i32, title[2] as i32);
+        let color = color_sensor.get_bin_data()?;
+        let color = (color.0 as i32, color.1 as i32, color.2 as i32);
 
         if color::check_blue(color) {
             println!("Found blue");

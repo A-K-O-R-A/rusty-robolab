@@ -59,6 +59,7 @@ pub fn adjust_color(color: RawColor) -> RgbColor {
     (r, g, b)
 }
 
+#[allow(dead_code)]
 pub fn calibrate_colors(color_sensor: &ColorSensor) -> Ev3Result<()> {
     color_sensor.set_mode_rgb_raw()?;
 
