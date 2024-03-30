@@ -2,11 +2,19 @@ use std::{thread, time::Duration};
 
 use ev3dev_lang_rust::{sensors::ColorSensor, Ev3Result};
 
+/*
 const WHITE: (u32, u32, u32) = (328, 353, 225);
 const BLACK: (u32, u32, u32) = (36, 47, 47);
 
 const BLUE: (u32, u32, u32) = (161, 291, 196);
 const RED: (u32, u32, u32) = (305, 94, 57);
+*/
+
+const WHITE: (u32, u32, u32) = (265, 285, 197);
+const BLACK: (u32, u32, u32) = (23, 32, 19);
+
+const BLUE: (u32, u32, u32) = (30, 86, 93);
+const RED: (u32, u32, u32) = (124, 27, 17);
 
 type RawColor = (i32, i32, i32);
 type RgbColor = (f32, f32, f32);
